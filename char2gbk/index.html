@@ -3,131 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>GBK编码转换器（增强版）</title>
+    <title>编码转换器（GBK & Unicode）</title>
     <link rel="icon" type="image/x-icon" href="https://ecp.sgcc.com.cn/ecp2.0//portal/favicon.ico">
-    <style>
-        :root {
-            --primary-color: #004f4b;
-            --accent-color: #006f6b;
-            --text-color: #005f5b;
-            --bg-color: #006f6b;
-        }
-
-        body {
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            font-family: Arial, sans-serif;            
-/*            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;*/
-            background: linear-gradient(#008f8b,whitesmoke);
-            color: var(--text-color);
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 25px;
-            background-color: rgba(255,255,255, 0.3);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,111,107, 0.8);
-            text-align: center;
-        }
-
-        h2 {
-            margin: 0 0 20px; /* 减少底部间距 */
-            color: var(--primary-color);
-            font-size: 1.6rem; /* 适当缩小标题 */
-            text-align: center;
-        }
-
-        .input-group {
-            position: relative;
-            max-width: 400px;  /* 新增最大宽度 */
-            margin: 0 auto 15px; /* 调整间距 */
-        }
-
-        input {
-            width: 90%;
-            padding: 10px 12px; /* 减少内边距 */
-            border: 2px solid #ddd;
-            border-radius: 6px; /* 缩小圆角 */
-            font-size: 0.95rem;
-            color: #006f6b;
-            transition: border-color 0.3s;
-        }
-
-        button {
-            max-width: 200px;  /* 限制按钮宽度 */
-            padding: 10px;     /* 减少内边距 */
-            font-size: 0.95rem;
-            background: #006f6b;
-            color: whitesmoke;
-            border-radius: 5px;
-        }
-
-        #output {
-            text-align: left;
-            margin-top: 15px;
-            padding: 10px !important;
-            line-height: 1.4 !important;
-            border-radius: 5px;
-        }
-
-        .char-block {
-            display: inline-block;
-            margin: 2px !important;
-            padding: 4px 8px !important;
-            line-height: 1.3 !important;
-            min-height: auto !important;
-            font-size: 1.1em;
-        }
-
-        @media (max-width: 640px) {
-            .container {
-                padding: 15px;
-            }
-
-            .input-group {
-                max-width: 100%; /* 移动端全宽度 */
-            }
-
-            .char-block {
-                font-size: 0.95em; /* 更小字号 */
-                padding: 3px 6px !important;
-            }
-
-            button {
-                max-width: 100%; /* 按钮全宽 */
-                padding: 12px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./css/style.css">
     <script src="./dist/gbk.js"></script>
 </head>
 <body>
-    <img src="https://ecp.sgcc.com.cn/ecp2.0//portal/logo.f16c4642db4bab0d3ce0.png">
+    <!-- 页面顶部logo，放在容器外部，左上角 -->
+    <img src="https://ecp.sgcc.com.cn/ecp2.0//portal/logo.f16c4642db4bab0d3ce0.png" alt="国网Logo" class="page-logo">
+    
     <div class="container">
-        <h2>GBK编码转换器</h2>
+        <h2>编码转换器（GBK & Unicode）</h2>
         <div class="input-group">
             <input 
-            type="text" 
-            id="inputText" 
-            placeholder="输入文字（支持中、英、字符）"
-            autocomplete="off"
+                type="text" 
+                id="inputText" 
+                placeholder="输入文字（支持中英文、符号等）"
+                autocomplete="off"
+                autofocus
             >
         </div>
         <button onclick="convert()">立即转换</button>
-        <div id="output"></div>
+        
+        <div class="stats hidden" id="stats">
+            <div class="stat-item">
+                <span class="stat-label">总字符数:</span>
+                <span class="stat-value" id="total-chars">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">GBK可编码:</span>
+                <span class="stat-value" id="gbk-success">0/0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Unicode可编码:</span>
+                <span class="stat-value" id="unicode-success">0/0</span>
+            </div>
+        </div>
+        
+        <div id="output">
+            <div class="empty-state">
+                <h3>编码转换工具</h3>
+                <p>输入文字后，点击"立即转换"按钮查看GBK和Unicode编码</p>
+            </div>
+        </div>
     </div>
+    
+    <div class="copy-badge" id="copy-badge">已复制到剪贴板</div>
 
     <script>
         const inputText = document.getElementById('inputText');
         const output = document.getElementById('output');
+        const stats = document.getElementById('stats');
+        const totalCharsEl = document.getElementById('total-chars');
+        const gbkSuccessEl = document.getElementById('gbk-success');
+        const unicodeSuccessEl = document.getElementById('unicode-success');
+        const copyBadge = document.getElementById('copy-badge');
 
-        // 十六进制格式化（支持单字符）
+        // 十六进制格式化
         const arr2hex = arr => arr.map(b => 
             b.toString(16).padStart(2, '0').toUpperCase()
-            ).join(' ');
+        ).join(' ');
+
+        // Unicode编码格式化
+        const char2unicode = char => {
+            const codePoint = char.codePointAt(0);
+            if (codePoint > 0xFFFF) {
+                const highSurrogate = Math.floor((codePoint - 0x10000) / 0x400) + 0xD800;
+                const lowSurrogate = ((codePoint - 0x10000) % 0x400) + 0xDC00;
+                return `U+${highSurrogate.toString(16).toUpperCase()} U+${lowSurrogate.toString(16).toUpperCase()} (代理对)`;
+            } else {
+                return `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`;
+            }
+        };
+
+        // 安全HTML转义
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // 显示复制反馈
+        function showCopyFeedback() {
+            copyBadge.classList.add('show');
+            setTimeout(() => {
+                copyBadge.classList.remove('show');
+            }, 1500);
+        }
 
         // 转换核心逻辑
         function convert() {
@@ -135,54 +97,111 @@
             
             if (!input) {
                 showMessage('⚠️ 请输入要转换的内容', 'warning');
+                stats.classList.add('hidden');
                 return;
             }
 
-            const result = [];
-            for (const char of input) {
+            const rows = [];
+            let gbkSuccess = 0;
+            let unicodeSuccess = input.length;
+            
+            for (let i = 0; i < input.length; i++) {
+                const char = input[i];
                 try {
-                    const bytes = GBK.encode(char);
-                    result.push(
-                        `<span class="char-block">
-                            <strong>${escapeHtml(char)}</strong>: 
-                            <code>${arr2hex(bytes)}</code>
-                        </span></br>`
-                        );
+                    const gbkBytes = GBK.encode(char);
+                    const unicodeHex = char2unicode(char);
+                    gbkSuccess++;
+                    
+                    rows.push(`
+                        <tr class="result-row" data-index="${i}">
+                            <td class="char-col">
+                                <div class="char-display">${escapeHtml(char)}</div>
+                            </td>
+                            <td class="gbk-col">
+                                <code class="code-value gbk-value">${arr2hex(gbkBytes)}</code>
+                            </td>
+                            <td class="unicode-col">
+                                <code class="code-value unicode-value">${unicodeHex}</code>
+                            </td>
+                        </tr>
+                    `);
                 } catch(e) {
-                    result.push(
-                        `<span class="char-block" style="background:#ffeef0">
-                            ${escapeHtml(char)}: <code>??</code>
-                        </span>`
-                        );
+                    const unicodeHex = char2unicode(char);
+                    
+                    rows.push(`
+                        <tr class="result-row error-row" data-index="${i}">
+                            <td class="char-col">
+                                <div class="char-display">${escapeHtml(char)}</div>
+                            </td>
+                            <td class="gbk-col">
+                                <code class="code-value">编码失败</code>
+                            </td>
+                            <td class="unicode-col">
+                                <code class="code-value unicode-value">${unicodeHex}</code>
+                            </td>
+                        </tr>
+                    `);
                 }
             }
             
-            output.innerHTML = result.join('');
-            output.style.background = "rgba(255,255,255, 0.3)";
+            // 更新统计信息
+            totalCharsEl.textContent = input.length;
+            gbkSuccessEl.textContent = `${gbkSuccess}/${input.length}`;
+            unicodeSuccessEl.textContent = `${unicodeSuccess}/${input.length}`;
+            stats.classList.remove('hidden');
+            
+            // 生成表格
+            const tableHtml = `
+                <table class="results-table">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="char-col">字符</th>
+                            <th class="gbk-col">GBK编码</th>
+                            <th class="unicode-col">Unicode编码</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            output.innerHTML = tableHtml;
             addCopyFeature();
-        }
-
-        // 安全HTML转义
-        function escapeHtml(str) {
-            return str.replace(/[&<>"']/g, m => 
-                ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m])
-                );
         }
 
         // 显示提示信息
         function showMessage(msg, type = 'info') {
-            output.innerHTML = `<div class="message ${type}">${msg}</div>`;
-            setTimeout(() => output.innerHTML = '', 2000);
+            const color = type === 'warning' ? '#d32f2f' : '#006f6b';
+            output.innerHTML = `
+                <div class="message-box ${type}">
+                    <h3>${msg}</h3>
+                    <p>请输入要转换的文字内容</p>
+                </div>
+            `;
+            stats.classList.add('hidden');
         }
 
         // 添加点击复制功能
         function addCopyFeature() {
-            output.querySelectorAll('.char-block').forEach(el => {
-                el.addEventListener('click', () => {
-                    const text = el.innerText.split(': ')[1];
-                    navigator.clipboard.writeText(text).then(() => {
-                        el.style.background = '#e8f4ff';
-                        setTimeout(() => el.style.background = '', 800);
+            output.querySelectorAll('.result-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const char = row.querySelector('.char-display').textContent;
+                    const gbkCode = row.querySelector('.gbk-col .code-value').textContent;
+                    const unicodeCode = row.querySelector('.unicode-col .code-value').textContent;
+                    
+                    const textToCopy = `字符: ${char}
+GBK编码: ${gbkCode}
+Unicode编码: ${unicodeCode}`;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        // 添加短暂的高亮效果
+                        row.style.backgroundColor = 'rgba(0, 111, 107, 0.2)';
+                        setTimeout(() => {
+                            row.style.backgroundColor = '';
+                        }, 300);
+                        
+                        showCopyFeedback();
                     });
                 });
             });
@@ -191,6 +210,11 @@
         // 回车键支持
         inputText.addEventListener('keypress', e => {
             if (e.key === 'Enter') convert();
+        });
+
+        // 页面加载后自动聚焦输入框
+        window.addEventListener('DOMContentLoaded', () => {
+            inputText.focus();
         });
     </script>
 </body>
