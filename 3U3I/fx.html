@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/x-icon" href="https://ecp.sgcc.com.cn/ecp2.0//portal/favicon.ico">
+    <title>三相电压电流分析仪</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 15px;
+            margin: 0;
+            overflow-x: hidden;
+            background: linear-gradient(#008f8b,whitesmoke);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        .container { 
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        .input-group-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-section {
+            background: rgba(255,255,255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .input-group { 
+            margin: 8px 0; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phase-label { 
+            font-weight: bold;
+            padding: 4px 0;
+            min-width: 50px;
+        }
+        .magnitude-input, .angle-input {
+            flex: 1;
+        }
+        input { 
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: white;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+        .canvas-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+        }
+        canvas { 
+            border: 2px solid #ddd; 
+            background: white;
+            border-radius: 10px;
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            touch-action: none;
+        }
+        .result-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 25px auto;
+            transition: all 0.3s ease;
+            display: block;
+            width: auto;
+            font-size: 16px;
+            font-weight: bold;
+            touch-action: manipulation;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0056b3, #003d82);
+        }
+        .seq-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .seq-title.voltage {
+            color: #FFA726;
+            border-bottom-color: #FFA726;
+        }
+        .seq-title.current {
+            color: #42A5F5;
+            border-bottom-color: #42A5F5;
+        }
+        .seq-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .result-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .result-item > div:first-child {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .result-item > div:last-child {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        .positive-seq { border-left: 4px solid #4CAF50; }
+        .negative-seq { border-left: 4px solid #F44336; }
+        .zero-seq { border-left: 4px solid #9C27B0; }
+        .phase-a { color: #FF6B00; }
+        .phase-b { color: #00C853; }
+        .phase-c { color: #D50000; }
+        h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        .power-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .power-item {
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .power-item > div:first-child {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .power-item > div:last-child {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        /* 桌面端适配 */
+        @media (min-width: 768px) {
+            body {
+                padding: 25px;
+            }
+            .container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .input-group-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+            h2 {
+                font-size: 2rem;
+                grid-column: 1 / -1;
+            }
+            canvas {
+                max-width: 500px;
+                height: 500px;
+            }
+            .seq-grid, .power-grid {
+                gap: 15px;
+            }
+            .result-item, .power-item {
+                padding: 15px;
+            }
+        }
+        
+        /* 小屏幕手机适配 */
+        @media (max-width: 380px) {
+            .input-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .phase-label {
+                min-width: auto;
+            }
+            input {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+            canvas {
+                height: 350px;
+            }
+            .seq-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .seq-grid .result-item:nth-child(3) {
+                grid-column: span 2;
+            }
+            .power-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+        
+        /* 中等屏幕手机 */
+        @media (min-width: 381px) and (max-width: 767px) {
+            .seq-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .power-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .power-item:nth-child(3) {
+                grid-column: span 2;
+            }
+        }
+        
+        .seq-icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h2>三相电压电流分析仪</h2>
+    <div class="container">
+        <div>
+            <div class="input-group-container">
+                <div class="input-section voltage-color">
+                    <h3>电压参数 (V)</h3>
+                    <div class="input-group">
+                        <div class="phase-label phase-a">A相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="v_magA" value="57.7" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="v_angA" value="0" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="phase-label phase-b">B相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="v_magB" value="57.7" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="v_angB" value="-120" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="phase-label phase-c">C相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="v_magC" value="57.7" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="v_angC" value="120" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section current-color">
+                    <h3>电流参数 (A)</h3>
+                    <div class="input-group">
+                        <div class="phase-label phase-a">A相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="i_magA" value="10" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="i_angA" value="0" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="phase-label phase-b">B相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="i_magB" value="10" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="i_angB" value="-120" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="phase-label phase-c">C相：</div>
+                        <div class="magnitude-input">
+                            <input type="number" id="i_magC" value="10" step="0.1" placeholder="幅值">
+                        </div>
+                        <div class="angle-input">
+                            <input type="number" id="i_angC" value="120" step="1" placeholder="角度">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="calculateAll()">开始计算</button>
+
+            <div class="result-section">
+                <h3>对称分量分析结果</h3>
+                
+                <!-- 电压对称分量 -->
+                <div class="seq-title voltage">
+                    <span class="seq-icon">⚡</span>
+                    <span>电压对称分量</span>
+                </div>
+                <div class="seq-grid">
+                    <div class="result-item positive-seq">
+                        <div>正序分量 U₁</div>
+                        <div id="v_pos_seq">0.00 V∠0.00°</div>
+                    </div>
+                    <div class="result-item negative-seq">
+                        <div>负序分量 U₂</div>
+                        <div id="v_neg_seq">0.00 V∠0.00°</div>
+                    </div>
+                    <div class="result-item zero-seq">
+                        <div>零序分量 3U₀</div>
+                        <div id="v_zero_seq">0.00 V∠0.00°</div>
+                    </div>
+                </div>
+                
+                <!-- 电流对称分量 -->
+                <div class="seq-title current">
+                    <span class="seq-icon">⏚</span>
+                    <span>电流对称分量</span>
+                </div>
+                <div class="seq-grid">
+                    <div class="result-item positive-seq">
+                        <div>正序分量 I₁</div>
+                        <div id="i_pos_seq">0.00 A∠0.00°</div>
+                    </div>
+                    <div class="result-item negative-seq">
+                        <div>负序分量 I₂</div>
+                        <div id="i_neg_seq">0.00 A∠0.00°</div>
+                    </div>
+                    <div class="result-item zero-seq">
+                        <div>零序分量 3I₀</div>
+                        <div id="i_zero_seq">0.00 A∠0.00°</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 25px;">功率计算结果</h3>
+                <div class="power-grid">
+                    <div class="power-item">
+                        <div>总有功功率</div>
+                        <div id="p_total">0.00 kW</div>
+                    </div>
+                    <div class="power-item">
+                        <div>总无功功率</div>
+                        <div id="q_total">0.00 kVAR</div>
+                    </div>
+                    <div class="power-item">
+                        <div>总视在功率</div>
+                        <div id="s_total">0.00 kVA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <h3>电压电流相量图</h3>
+            <canvas id="combinedCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('combinedCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 存储当前数据，用于重新绘制
+        let currentVoltageData = null;
+        let currentCurrentData = null;
+        let currentScale = 1;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // 初始化画布大小
+        function initCanvasSize() {
+            const container = document.querySelector('.canvas-container');
+            const containerWidth = container.clientWidth;
+            
+            // 设置画布尺寸
+            const canvasWidth = Math.min(containerWidth, isMobile ? 400 : 500);
+            const canvasHeight = isMobile ? 350 : 500;
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // 重新绘制
+            if (currentVoltageData && currentCurrentData) {
+                drawCombinedPhasorDiagram(currentVoltageData, currentCurrentData);
+            }
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initCanvasSize();
+            calculateAll();
+            
+            // 为所有输入框添加实时计算
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    setTimeout(calculateAll, 100);
+                });
+            });
+        });
+        
+        // 窗口大小变化时重新初始化
+        window.addEventListener('resize', () => {
+            setTimeout(initCanvasSize, 100);
+        });
+        
+        // 方向变化时重新初始化
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                initCanvasSize();
+                if (currentVoltageData && currentCurrentData) {
+                    drawCombinedPhasorDiagram(currentVoltageData, currentCurrentData);
+                }
+            }, 300);
+        });
+
+        function calculateAll() {
+            const voltageData = getInputData('v');
+            const currentData = getInputData('i');
+            
+            // 存储当前数据
+            currentVoltageData = voltageData;
+            currentCurrentData = currentData;
+            
+            // 计算对称分量
+            const vSequences = calculateSequences(voltageData);
+            const iSequences = calculateSequences(currentData);
+            
+            // 计算功率
+            const power = calculatePower(voltageData, currentData);
+            
+            // 更新显示
+            updateDisplay(vSequences, iSequences, power);
+            
+            // 绘制相量图
+            drawCombinedPhasorDiagram(voltageData, currentData);
+        }
+
+        function getInputData(type) {
+            return {
+                A: {
+                    mag: parseFloat(document.getElementById(`${type}_magA`).value) || 0,
+                    ang: parseFloat(document.getElementById(`${type}_angA`).value) || 0
+                },
+                B: {
+                    mag: parseFloat(document.getElementById(`${type}_magB`).value) || 0,
+                    ang: parseFloat(document.getElementById(`${type}_angB`).value) || 0
+                },
+                C: {
+                    mag: parseFloat(document.getElementById(`${type}_magC`).value) || 0,
+                    ang: parseFloat(document.getElementById(`${type}_angC`).value) || 0
+                }
+            };
+        }
+
+        function calculateSequences(data) {
+            // 获取三相相量
+            const a = data.A;
+            const b = data.B;
+            const c = data.C;
+            
+            // α算子：120°旋转因子
+            const alphaReal = Math.cos(2 * Math.PI / 3);  // cos120° = -0.5
+            const alphaImag = Math.sin(2 * Math.PI / 3);  // sin120° = 0.8660254
+            
+            // 将各相转换为复数
+            const aComplex = polarToComplex(a.mag, a.ang);
+            const bComplex = polarToComplex(b.mag, b.ang);
+            const cComplex = polarToComplex(c.mag, c.ang);
+            
+            // 计算α*b
+            const alphaBTemp = complexMultiply({real: alphaReal, imag: alphaImag}, bComplex);
+            
+            // 计算α²*c
+            const alpha2Real = Math.cos(4 * Math.PI / 3);  // cos240° = -0.5
+            const alpha2Imag = Math.sin(4 * Math.PI / 3);  // sin240° = -0.8660254
+            const alpha2CTemp = complexMultiply({real: alpha2Real, imag: alpha2Imag}, cComplex);
+            
+            // 计算正序
+            const positiveSum = complexAdd(aComplex, alphaBTemp, alpha2CTemp);
+            const positiveSeq = complexDivide(positiveSum, 3);
+            
+            // 计算α²*b
+            const alpha2BTemp = complexMultiply({real: alpha2Real, imag: alpha2Imag}, bComplex);
+            
+            // 计算α*c
+            const alphaCTemp = complexMultiply({real: alphaReal, imag: alphaImag}, cComplex);
+            
+            // 计算负序
+            const negativeSum = complexAdd(aComplex, alpha2BTemp, alphaCTemp);
+            const negativeSeq = complexDivide(negativeSum, 3);
+            
+            // 计算零序（不除以3，直接返回三相之和）
+            const zeroSeq = complexAdd(aComplex, bComplex, cComplex);
+            
+            return {
+                positive: positiveSeq,
+                negative: negativeSeq,
+                zero: zeroSeq
+            };
+        }
+
+        function calculatePower(vData, iData) {
+            let pTotal = 0, qTotal = 0;
+            ['A','B','C'].forEach(phase => {
+                const v = polarToComplex(vData[phase].mag, vData[phase].ang);
+                const i = polarToComplex(iData[phase].mag, iData[phase].ang);
+                // 计算复功率 S = V * I*
+                const iConj = { real: i.real, imag: -i.imag };
+                const S = complexMultiply(v, iConj);
+                pTotal += S.real;
+                qTotal += S.imag;
+            });
+            return { 
+                p: pTotal, 
+                q: qTotal,
+                s: Math.hypot(pTotal, qTotal)
+            };
+        }
+
+        function polarToComplex(mag, ang) {
+            // 角度转换为弧度
+            const rad = ang * Math.PI / 180;
+            return {
+                real: mag * Math.cos(rad),
+                imag: mag * Math.sin(rad)
+            };
+        }
+
+        function complexMultiply(c1, c2) {
+            return {
+                real: c1.real * c2.real - c1.imag * c2.imag,
+                imag: c1.real * c2.imag + c1.imag * c2.real
+            };
+        }
+
+        function complexAdd(...complexes) {
+            return complexes.reduce((sum, c) => ({
+                real: sum.real + c.real,
+                imag: sum.imag + c.imag
+            }), { real: 0, imag: 0 });
+        }
+
+        function complexDivide(c, scalar) {
+            return {
+                real: c.real / scalar,
+                imag: c.imag / scalar
+            };
+        }
+
+        function updateDisplay(vSequences, iSequences, power) {
+            // 更新电压对称分量
+            document.getElementById('v_pos_seq').textContent = 
+                `${getMagnitude(vSequences.positive).toFixed(2)} V∠${getAngle(vSequences.positive).toFixed(1)}°`;
+            
+            document.getElementById('v_neg_seq').textContent = 
+                `${getMagnitude(vSequences.negative).toFixed(2)} V∠${getAngle(vSequences.negative).toFixed(1)}°`;
+            
+            document.getElementById('v_zero_seq').textContent = 
+                `${getMagnitude(vSequences.zero).toFixed(2)} V∠${getAngle(vSequences.zero).toFixed(1)}°`;
+            
+            // 更新电流对称分量
+            document.getElementById('i_pos_seq').textContent = 
+                `${getMagnitude(iSequences.positive).toFixed(2)} A∠${getAngle(iSequences.positive).toFixed(1)}°`;
+            
+            document.getElementById('i_neg_seq').textContent = 
+                `${getMagnitude(iSequences.negative).toFixed(2)} A∠${getAngle(iSequences.negative).toFixed(1)}°`;
+            
+            document.getElementById('i_zero_seq').textContent = 
+                `${getMagnitude(iSequences.zero).toFixed(2)} A∠${getAngle(iSequences.zero).toFixed(1)}°`;
+            
+            // 更新功率
+            document.getElementById('p_total').textContent = 
+                `${(power.p / 1000).toFixed(3)} kW`;
+            
+            document.getElementById('q_total').textContent = 
+                `${(power.q / 1000).toFixed(3)} kVAR`;
+            
+            document.getElementById('s_total').textContent = 
+                `${(power.s / 1000).toFixed(3)} kVA`;
+        }
+
+        function getMagnitude(complex) {
+            return Math.hypot(complex.real, complex.imag);
+        }
+
+        function getAngle(complex) {
+            let angle = Math.atan2(complex.imag, complex.real) * 180 / Math.PI;
+            // 将角度规范到0-360度范围
+            if (angle < 0) angle += 360;
+            return angle;
+        }
+
+        function drawCombinedPhasorDiagram(vData, iData) {
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 计算最大幅值
+            const allMagnitudes = [
+                ...Object.values(vData).map(d => d.mag),
+                ...Object.values(iData).map(d => d.mag)
+            ];
+            const maxMag = Math.max(...allMagnitudes);
+            
+            // 设置绘图区域和缩放比例
+            const padding = 60; // 留出边缘空间
+            const drawWidth = canvas.width - padding * 2;
+            const drawHeight = canvas.height - padding * 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // 计算缩放比例
+            if (maxMag > 0) {
+                currentScale = Math.min(drawWidth, drawHeight) * 0.35 / maxMag;
+            } else {
+                currentScale = 1;
+            }
+
+            // 绘制简洁坐标系
+            drawSimpleAxes(centerX, centerY, drawWidth, drawHeight);
+            
+            // 绘制电压相量（实线）
+            ['A','B','C'].forEach(phase => {
+                const data = vData[phase];
+                const complex = polarToComplex(data.mag, data.ang);
+                drawPhasor(centerX, centerY, complex, getPhaseColor(phase), `U${phase}`, 3, false);
+            });
+
+            // 绘制电流相量（虚线）
+            ['A','B','C'].forEach(phase => {
+                const data = iData[phase];
+                const complex = polarToComplex(data.mag, data.ang);
+                drawPhasor(centerX, centerY, complex, getPhaseColor(phase), `I${phase}`, 2, true);
+            });
+            
+            // 添加简洁图例
+            drawSimpleLegend();
+        }
+
+        function getPhaseColor(phase) {
+            return {
+                'A': '#FF6B00',
+                'B': '#00C853',
+                'C': '#D50000'
+            }[phase];
+        }
+
+        function drawSimpleAxes(centerX, centerY, width, height) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // 绘制简洁的坐标轴
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([]);
+            
+            // X轴
+            ctx.beginPath();
+            ctx.moveTo(-width/2, 0);
+            ctx.lineTo(width/2, 0);
+            ctx.stroke();
+            
+            // Y轴
+            ctx.beginPath();
+            ctx.moveTo(0, -height/2);
+            ctx.lineTo(0, height/2);
+            ctx.stroke();
+            
+            // 只标注0°方向
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('0°', width/2 - 5, 5);
+            
+            // 绘制坐标轴箭头
+            // X轴箭头
+            ctx.beginPath();
+            ctx.moveTo(width/2, 0);
+            ctx.lineTo(width/2 - 10, -6);
+            ctx.lineTo(width/2 - 10, 6);
+            ctx.closePath();
+            ctx.fillStyle = '#333';
+            ctx.fill();
+            
+            // Y轴箭头
+            ctx.beginPath();
+            ctx.moveTo(0, -height/2);
+            ctx.lineTo(-6, -height/2 + 10);
+            ctx.lineTo(6, -height/2 + 10);
+            ctx.closePath();
+            ctx.fillStyle = '#333';
+            ctx.fill();
+            
+            // 绘制参考圆
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            const radius = Math.min(width, height) * 0.4;
+            
+            // 参考圆
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawPhasor(centerX, centerY, complex, color, label, lineWidth=2, isDashed=false) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // 计算坐标
+            const x = complex.real * currentScale;
+            const y = -complex.imag * currentScale; // 注意：Y轴方向反转
+            
+            // 绘制箭头线
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.setLineDash(isDashed ? [5, 3] : []);
+            ctx.stroke();
+
+            // 绘制箭头头部
+            const angle = Math.atan2(y, x);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-10, 6);
+            ctx.lineTo(-10, -6);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.restore();
+
+            // 绘制标签
+            const fontSize = Math.min(14, canvas.width / 25);
+            ctx.fillStyle = color;
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 标签位置稍微偏移，避免与箭头重叠
+            const labelX = centerX + x * 1.15;
+            const labelY = centerY + y * 1.15;
+            ctx.fillText(label, labelX, labelY);
+        }
+        
+        function drawSimpleLegend() {
+            const legendX = 20;
+            const legendY = 30;
+            const lineHeight = 25;
+            
+            // 电压图例（实线）
+            ctx.beginPath();
+            ctx.moveTo(legendX, legendY);
+            ctx.lineTo(legendX + 40, legendY);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([]);
+            ctx.stroke();
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('电压 (实线)', legendX + 45, legendY - 3);
+            
+            // 电流图例（虚线）
+            ctx.beginPath();
+            ctx.moveTo(legendX, legendY + lineHeight);
+            ctx.lineTo(legendX + 40, legendY + lineHeight);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.stroke();
+            ctx.fillStyle = '#333';
+            ctx.fillText('电流 (虚线)', legendX + 45, legendY + lineHeight - 3);
+        }
+    </script>
+</body>
+</html>
