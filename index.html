@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>继保调试小工具</title>
+    <link rel="icon" type="image/x-icon" href="https://ecp.sgcc.com.cn/ecp2.0//portal/favicon.ico">
+    <style>
+        :root {
+            --primary-color: #004f4b;
+            --accent-color: #006f6b;
+            --text-color: #005f5b;
+            --card-bg: rgba(255, 255, 255, 0.3);
+            --row-hover: rgba(0, 111, 107, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(#008f8b, whitesmoke);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto 20px;
+            padding: 25px;
+            background-color: var(--card-bg);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 111, 107, 0.8);
+            text-align: center;
+        }
+
+        h2 {
+            margin: 0 0 20px;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 1px;
+        }
+
+        .description {
+            margin: 0 auto 30px;
+            color: #006f6b;
+            font-size: 1rem;
+            line-height: 1.5;
+            max-width: 800px;
+            padding: 0 10px;
+        }
+
+        .tools-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            padding: 25px 20px;
+            border: 1px solid rgba(0, 111, 107, 0.2);
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 280px;
+            min-height: 350px;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 111, 107, 0.2);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            text-align: center;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin: 0 0 15px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-description {
+            color: #006f6b;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .nav-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 0.95rem;
+            background: var(--accent-color);
+            color: whitesmoke;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            margin-top: auto;
+        }
+
+        .nav-button:hover {
+            background: #005f5b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 111, 107, 0.3);
+        }
+
+        .footer-note {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 111, 107, 0.2);
+            color: #006f6b;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .tools-container {
+                gap: 15px;
+            }
+            
+            .tool-card {
+                max-width: 100%;
+                min-height: 300px;
+            }
+            
+            .tool-title {
+                min-height: auto;
+                margin-bottom: 10px;
+            }
+            
+            .tool-icon {
+                height: 50px;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+                margin-top: 15px;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+            
+            .description {
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+            }
+            
+            .tool-card {
+                padding: 20px 15px;
+                min-height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>继保调试小工具</h2>
+        
+        <p class="description">
+            欢迎使用继保调试小工具集，以下工具可帮助您完成字符编码转换、三相电压电流分析以及电压序分量计算等任务。
+        </p>
+        
+        <div class="tools-container">
+            <!-- 工具1：字符转GBK编码 -->
+            <div class="tool-card">
+                <div class="tool-icon">🔤</div>
+                <h3 class="tool-title">编码转换器（GBK & Unicode）</h3>
+                <p class="tool-description">
+                    将中英文字符、符号等转换为GBK、Unicode编码格式。支持批量转换，实时显示编码结果信息，方便继保装置被保护设备名称整定。
+                </p>
+                <a href="./char2gbk/index.html" class="nav-button">进入工具</a>
+            </div>
+            
+            <!-- 工具2：三相电压电流分析仪 -->
+            <div class="tool-card">
+                <div class="tool-icon">⚡</div>
+                <h3 class="tool-title">三相电压电流分析仪</h3>
+                <p class="tool-description">
+                    三相电力系统电压电流分析工具。支持序分量对称分量法计算，计算正负零序分量、有功无功视在功率，支持不平衡度分析和波形可视化展示。
+                </p>
+                <a href="./3U3I/fx.html" class="nav-button">进入工具</a>
+            </div>
+            
+            <!-- 工具3：三相电压序分量叠加计算器 -->
+            <div class="tool-card">
+                <div class="tool-icon">📊</div>
+                <h3 class="tool-title">三相电压序分量叠加计算器</h3>
+                <p class="tool-description">
+                    正负零序分量电压叠加计算，复压闭锁计算小帮手。
+                </p>
+                <a href="./3U3I/hc.html" class="nav-button">进入工具</a>
+            </div>
+        </div>
+        
+        <div class="footer-note">
+            <p>@漫天飞雪</p>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载后添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为工具卡片添加点击效果
+            const toolCards = document.querySelectorAll('.tool-card');
+            
+            toolCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // 防止点击按钮时触发卡片点击
+                    if (e.target.classList.contains('nav-button')) return;
+                    
+                    const link = this.querySelector('.nav-button');
+                    if (link) {
+                        // 添加点击反馈
+                        this.style.transform = 'scale(0.98)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                        }, 150);
+                    }
+                });
+            });
+            
+            // 添加键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                // 数字键1-3快速导航
+                if (e.key >= '1' && e.key <= '3' && !e.ctrlKey && !e.altKey) {
+                    const index = parseInt(e.key) - 1;
+                    const links = document.querySelectorAll('.nav-button');
+                    
+                    if (links[index]) {
+                        e.preventDefault();
+                        links[index].click();
+                    }
+                }
+            });
+            
+            // 确保所有卡片高度一致
+            function equalizeCardHeights() {
+                const cards = document.querySelectorAll('.tool-card');
+                if (cards.length === 0) return;
+                
+                let maxHeight = 0;
+                
+                // 重置所有卡片高度，让它们自然高度
+                cards.forEach(card => {
+                    card.style.minHeight = '';
+                });
+                
+                // 获取最高卡片的高度
+                cards.forEach(card => {
+                    const height = card.offsetHeight;
+                    if (height > maxHeight) {
+                        maxHeight = height;
+                    }
+                });
+                
+                // 如果是在桌面端，设置统一的最小高度
+                if (window.innerWidth > 768 && maxHeight > 0) {
+                    cards.forEach(card => {
+                        card.style.minHeight = maxHeight + 'px';
+                    });
+                }
+            }
+            
+            // 初始设置和窗口大小变化时重新计算
+            equalizeCardHeights();
+            window.addEventListener('resize', equalizeCardHeights);
+        });
+    </script>
+</body>
+</html>
