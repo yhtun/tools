@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主变差动保护计算器</title>
+    <link rel="icon" type="image/x-icon" href="https://ecp.sgcc.com.cn/ecp2.0//portal/favicon.ico">
+    <!-- 引入Bootstrap样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #004f4b;
+            --accent-color: #006f6b;
+            --text-color: #005f5b;
+            --card-bg: rgba(255, 255, 255, 0.3);
+            --row-hover: rgba(0, 111, 107, 0.1);
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(#008f8b, whitesmoke);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 6px;
+        }
+
+        h2 {
+            margin: 0 0 15px;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 1px;
+        }
+
+        .description {
+            margin: 0 auto 20px;
+            color: #006f6b;
+            font-size: 1rem;
+            line-height: 1.5;
+            max-width: 800px;
+            padding: 0 10px;
+            text-align: center;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            padding: 25px 20px;
+            border: 1px solid rgba(0, 111, 107, 0.2);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 111, 107, 0.1);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 15px rgba(0, 111, 107, 0.15);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .chart-container {
+            height: 450px;
+            margin-top: 20px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .result-item {
+            margin: 12px 0;
+            font-size: 16px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .result-value {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 111, 107, 0.3);
+            border-radius: 5px;
+            color: var(--text-color);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 111, 107, 0.2);
+            color: var(--text-color);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: #005f5b;
+            border-color: #005f5b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 111, 107, 0.3);
+        }
+
+        .unit-note {
+            font-size: 0.85em;
+            color: #006f6b;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .test-current-result {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(0, 111, 107, 0.2);
+        }
+
+        .phase-input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .phase-input {
+            width: 100px;
+            margin-right: 10px;
+        }
+
+        .test-current-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 111, 107, 0.1);
+        }
+
+        .test-current-item:last-child {
+            border-bottom: none;
+        }
+
+        .calculation-formula {
+            background: rgba(255, 255, 255, 0.5);
+            border-left: 4px solid var(--accent-color);
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .balance-coefficient-info {
+            background: rgba(232, 244, 252, 0.5);
+            border: 1px solid rgba(182, 212, 254, 0.5);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .phase-result-table {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 0.9em;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .phase-result-table th {
+            background: rgba(0, 111, 107, 0.1);
+            text-align: center;
+            padding: 8px;
+            border: 1px solid rgba(0, 111, 107, 0.2);
+            color: var(--primary-color);
+        }
+
+        .phase-result-table td {
+            text-align: center;
+            padding: 8px;
+            border: 1px solid rgba(0, 111, 107, 0.2);
+        }
+
+        .test-type-selector {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .clock-number-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .clock-number-input {
+            width: 80px;
+        }
+
+        .note-box {
+            background: rgba(255, 243, 205, 0.5);
+            border: 1px solid rgba(255, 234, 167, 0.5);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .form-text {
+            color: #006f6b;
+        }
+
+        .legend-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #006f6b;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            border-radius: 3px;
+        }
+
+        .footer-note {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 111, 107, 0.2);
+            color: #006f6b;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 95%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                padding: 0 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+            
+            .description {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+                margin-top: 20px;
+            }
+            
+            .card {
+                padding: 20px 15px;
+            }
+            
+            .chart-container {
+                height: 350px;
+                padding: 10px;
+            }
+            
+            .legend-container {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .section-title {
+                font-size: 1rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+            
+            .result-item {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4 mb-5">
+        <h2>三绕组主变差动保护计算 & 三段式比率差动曲线</h2>
+        <p class="description">注：Ie表示基准电流（高压侧二次额定电流），所有标幺值均以Ie为基准</p>
+
+        <!-- 参数输入区域 -->
+        <div class="row">
+            <!-- 基础参数输入 -->
+            <div class="col-md-6">
+                <h5 class="section-title">一、主变基础参数</h5>
+                <div class="card p-4">
+                    <!-- 三侧分别输入额定容量 -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label">高压侧额定容量 (kVA)</label>
+                            <input type="number" id="sn1" class="form-control" placeholder="例如：750000" required min="1" value="750000">
+                            <div class="form-text small">通常为100%容量</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">中压侧额定容量 (kVA)</label>
+                            <input type="number" id="sn2" class="form-control" placeholder="例如：750000" required min="1" value="750000">
+                            <div class="form-text small">通常为100%容量</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">低压侧额定容量 (kVA)</label>
+                            <input type="number" id="sn3" class="form-control" placeholder="例如：750000" required min="1" value="750000">
+                            <div class="form-text small">通常为100%容量</div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label">高压侧额定电压 (kV)</label>
+                            <input type="number" id="u1n" class="form-control" placeholder="例如：525" required min="0.1" value="525">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">中压侧额定电压 (kV)</label>
+                            <input type="number" id="u2n" class="form-control" placeholder="例如：230" required min="0.1" value="230">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">低压侧额定电压 (kV)</label>
+                            <input type="number" id="u3n" class="form-control" placeholder="例如：36" required min="0.1" value="36">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label">高压侧CT变比</label>
+                            <input type="number" id="nta1" class="form-control" placeholder="例如：1200" required min="1" value="1200">
+                            <div class="form-text small">例：1200/1=1200</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">中压侧CT变比</label>
+                            <input type="number" id="nta2" class="form-control" placeholder="例如：2000" required min="1" value="2000">
+                            <div class="form-text small">例：2000/1=2000</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">低压侧CT变比</label>
+                            <input type="number" id="nta3" class="form-control" placeholder="例如：5000" required min="1" value="5000">
+                            <div class="form-text small">例：5000/1=5000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="section-title">二、三段式比率差动保护定值（标幺值）</h5>
+                <div class="card p-4">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">差动启动电流 Icdqd (Ie)</label>
+                            <input type="number" id="idSetPerUnit" class="form-control" value="0.5" step="0.01" required min="0.01" max="1.0">
+                            <div class="form-text small">基准Ie=高压侧二次额定电流，通常0.2~0.5 Ie</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">差动速断定值 Icdsd (Ie)</label>
+                            <input type="number" id="idsSetPerUnit" class="form-control" value="6.0" step="0.1" required min="2.0">
+                            <div class="form-text small">通常4.0~8.0 Ie</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">第一拐点电流 (Ie)</label>
+                            <input type="number" id="resInf1" class="form-control" value="0.5" step="0.01" required min="0.2" max="3.0">
+                            <div class="form-text small">通常0.5~1.5 Ie，第一段结束点</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">第二拐点电流 (Ie)</label>
+                            <input type="number" id="resInf2" class="form-control" value="6.0" step="0.01" required min="1.5" max="8.0">
+                            <div class="form-text small">通常2.0~6.0 Ie，第二段结束点</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label">第一段斜率 K1</label>
+                            <input type="number" id="kres1" class="form-control" value="0.2" step="0.01" required min="0.05" max="0.5">
+                            <div class="form-text small">通常0.1~0.3</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">第二段斜率 K2</label>
+                            <input type="number" id="kres2" class="form-control" value="0.5" step="0.01" required min="0.3" max="0.8">
+                            <div class="form-text small">通常0.4~0.7</div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">第三段斜率 K3</label>
+                            <input type="number" id="kres3" class="form-control" value="0.75" step="0.01" required min="0.5" max="1.0">
+                            <div class="form-text small">通常0.6~0.9</div>
+                        </div>
+                    </div>
+                    
+                    <button id="calcBtn" class="btn btn-primary w-100 mt-3">计算参数 & 绘制曲线</button>
+                </div>
+            </div>
+
+            <!-- 计算结果展示 -->
+            <div class="col-md-6">
+                <h5 class="section-title">三、计算结果</h5>
+                <div class="card p-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="result-item">
+                                <span class="result-label">高压侧一次电流：</span>
+                                <span id="i1nResult" class="result-value d-block">-- A</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">中压侧一次电流：</span>
+                                <span id="i2nResult" class="result-value d-block">-- A</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">低压侧一次电流：</span>
+                                <span id="i3nResult" class="result-value d-block">-- A</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="result-item">
+                                <span class="result-label">高压侧二次电流：</span>
+                                <span id="i1n2Result" class="result-value d-block">-- A</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">中压侧二次电流：</span>
+                                <span id="i2n2Result" class="result-value d-block">-- A</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">低压侧二次电流：</span>
+                                <span id="i3n2Result" class="result-value d-block">-- A</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="balance-coefficient-info">
+                        <strong>平衡系数计算方法（直接使用二次电流比值）：</strong><br>
+                        以高压侧为基准侧，平衡系数使各侧二次电流在额定状态下相等。
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-4">
+                            <div class="result-item">
+                                <span class="result-label">高压侧平衡系数：</span>
+                                <span id="kbal1Result" class="result-value d-block">1.0000</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="result-item">
+                                <span class="result-label">中压侧平衡系数：</span>
+                                <span id="kbal2Result" class="result-value d-block">--</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="result-item">
+                                <span class="result-label">低压侧平衡系数：</span>
+                                <span id="kbal3Result" class="result-value d-block">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="calculation-formula mt-2">
+                        <strong>平衡系数计算公式：</strong><br>
+                        K<sub>bal1</sub> = 1.0 (基准侧)<br>
+                        K<sub>bal2</sub> = I<sub>1n2</sub> / I<sub>2n2</sub><br>
+                        K<sub>bal3</sub> = I<sub>1n2</sub> / I<sub>3n2</sub><br>
+                        <small>其中 I<sub>1n2</sub>, I<sub>2n2</sub>, I<sub>3n2</sub> 分别为高、中、低压侧二次额定电流</small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="result-item">
+                                <span class="result-label">差动启动电流：</span>
+                                <span id="idSetResult" class="result-value d-block">-- A</span>
+                                <small class="text-muted">二次值</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="result-item">
+                                <span class="result-label">差动速断定值：</span>
+                                <span id="idsSetResult" class="result-value d-block">-- A</span>
+                                <small class="text-muted">二次值</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="section-title">四、三段式比率差动曲线</h5>
+                <div class="card p-4">
+                    <div class="chart-container">
+                        <canvas id="diffCurveChart"></canvas>
+                    </div>
+                    <div class="legend-container">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color:#3498db;"></div>
+                            <span>比率差动动作边界</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="border-bottom:2px dashed #f39c12;"></div>
+                            <span>差动速断阈值</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color:#2ecc71; border-radius:50%;"></div>
+                            <span>第一拐点</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color:#9b59b6; border-radius:50%;"></div>
+                            <span>第二拐点</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="section-title">五、试验电流计算</h5>
+                <div class="card p-4">
+                    <div class="mb-3">
+                        <label class="form-label">选择测试点（在图表上点击或手动输入）</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" id="testIr" class="form-control" placeholder="制动电流 Ir (Ie)" step="0.1" min="0" value="1.0">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" id="testId" class="form-control" placeholder="差动电流 Id (Ie)" step="0.1" min="0" value="0.7">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">选择试验侧</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="testSide" id="testSideMid" value="mid" checked>
+                            <label class="form-check-label" for="testSideMid">中压侧</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="testSide" id="testSideLow" value="low">
+                            <label class="form-check-label" for="testSideLow">低压侧</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">试验类型</label>
+                        <div class="test-type-selector">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="testType" id="testTypeSixPhase" value="sixPhase" checked>
+                                <label class="form-check-label" for="testTypeSixPhase">六相电流试验</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="testType" id="testTypeThreePhase" value="threePhase">
+                                <label class="form-check-label" for="testTypeThreePhase">三相电流试验</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">接线钟点数设置</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label small">中压侧钟点数</label>
+                                <!-- 只保留12点、1点、11点，默认12点 -->
+                                <select id="clockNumberMid" class="form-select">
+                                    <option value="12" selected>12点 (0°)</option>
+                                    <option value="11">11点 (30°)</option>
+                                    <option value="1">1点 (-30°)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">低压侧钟点数</label>
+                                <!-- 只保留12点、1点、11点，默认11点 -->
+                                <select id="clockNumberLow" class="form-select">
+                                    <option value="12">12点 (0°)</option>
+                                    <option value="11" selected>11点 (30°)</option>
+                                    <option value="1">1点 (-30°)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-text small">高压侧固定为Y接线，相位0°；中低压侧根据实际接线选择钟点数</div>
+                    </div>
+                    
+                    <div class="note-box">
+                        <strong>注意：</strong>
+                        <ul class="mb-0">
+                            <li>考虑CT极性朝向主变，中低压侧电流角度需反180°</li>
+                            <li>六相电流试验：模拟实际运行情况，两侧均加三相电流</li>
+                            <li>三相电流试验：高压侧IA与IB幅值相等、角度相反，IC为0；低压侧Ia为√3倍电流，角度与高压侧IA相反</li>
+                        </ul>
+                    </div>
+                    
+                    <button id="calcTestCurrentBtn" class="btn btn-primary w-100 mt-3">计算试验电流</button>
+                    
+                    <div id="testCurrentResults" class="test-current-result mt-3" style="display:none;">
+                        <h6 class="mb-3">试验电流计算结果</h6>
+                        
+                        <div class="test-current-item">
+                            <span class="result-label">测试点状态：</span>
+                            <span id="testPointStatus" class="result-value d-block">--</span>
+                        </div>
+                        
+                        <div class="test-current-item">
+                            <span class="result-label" id="testSideLabel">中压侧：</span>
+                            <div class="mt-2">
+                                <strong>高压侧三相电流 (基准侧，Y接线，相位0°/120°/240°)：</strong>
+                                <table class="phase-result-table mt-1">
+                                    <thead>
+                                        <tr>
+                                            <th>相别</th>
+                                            <th>幅值 (A)</th>
+                                            <th>相位 (°)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="highSideCurrentTable">
+                                        <!-- 高压侧三相电流结果将在这里显示 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <strong id="lowSideCurrentLabel">中压侧三相电流：</strong>
+                                <table class="phase-result-table mt-1">
+                                    <thead>
+                                        <tr>
+                                            <th>相别</th>
+                                            <th>幅值 (A)</th>
+                                            <th>相位 (°)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lowSideCurrentTable">
+                                        <!-- 中/低压侧三相电流结果将在这里显示 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="test-current-item">
+                            <span class="result-label">验证计算：</span>
+                            <div class="mt-2">
+                                <table class="phase-result-table">
+                                    <thead>
+                                        <tr>
+                                            <th>相别</th>
+                                            <th>差动电流 (Ie)</th>
+                                            <th>制动电流 (Ie)</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="verificationTable">
+                                        <!-- 验证计算结果将在这里显示 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="calculation-formula mt-2">
+                            <strong>计算说明：</strong><br>
+                            3. 六相试验：两侧均加三相电流，模拟实际运行情况<br>
+                            4. 三相试验：高压侧IA与IB幅值相等、角度相反，IC为0；低压侧Ia为√3倍电流，角度与高压侧IA相反
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <p>@继保调试小工具集 - 主变差动保护计算器</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化Chart实例和全局变量
+        let diffChart = null;
+        let globalI1n2 = 0; // 存储高压侧二次额定电流
+        let globalI2n2 = 0; // 存储中压侧二次额定电流
+        let globalI3n2 = 0; // 存储低压侧二次额定电流
+        let globalKbal2 = 0; // 存储中压侧平衡系数
+        let globalKbal3 = 0; // 存储低压侧平衡系数
+        let globalIdSetPerUnit = 0; // 存储差动启动电流标幺值
+        let globalResInf1 = 0; // 存储第一拐点
+        let globalResInf2 = 0; // 存储第二拐点
+        let globalKres1 = 0; // 存储第一段斜率
+        let globalKres2 = 0; // 存储第二段斜率
+        let globalKres3 = 0; // 存储第三段斜率
+
+        // 计算按钮点击事件
+        document.getElementById('calcBtn').addEventListener('click', function() {
+            // 获取输入参数 - 三侧分别输入额定容量
+            const sn1 = parseFloat(document.getElementById('sn1').value);
+            const sn2 = parseFloat(document.getElementById('sn2').value);
+            const sn3 = parseFloat(document.getElementById('sn3').value);
+            const u1n = parseFloat(document.getElementById('u1n').value);
+            const u2n = parseFloat(document.getElementById('u2n').value);
+            const u3n = parseFloat(document.getElementById('u3n').value);
+            const nta1 = parseFloat(document.getElementById('nta1').value);
+            const nta2 = parseFloat(document.getElementById('nta2').value);
+            const nta3 = parseFloat(document.getElementById('nta3').value);
+            
+            // 差动保护定值（标幺值）- 现在只需要两个拐点
+            globalIdSetPerUnit = parseFloat(document.getElementById('idSetPerUnit').value);
+            globalResInf1 = parseFloat(document.getElementById('resInf1').value); // 第一拐点
+            globalResInf2 = parseFloat(document.getElementById('resInf2').value); // 第二拐点
+            globalKres1 = parseFloat(document.getElementById('kres1').value); // 第一段斜率
+            globalKres2 = parseFloat(document.getElementById('kres2').value); // 第二段斜率
+            globalKres3 = parseFloat(document.getElementById('kres3').value); // 第三段斜率
+            const idsSetPerUnit = parseFloat(document.getElementById('idsSetPerUnit').value);
+
+            // 严格校验输入（非数字/负数拦截）
+            const requiredParams = [sn1, sn2, sn3, u1n, u2n, u3n, nta1, nta2, nta3, 
+                                   globalIdSetPerUnit, globalResInf1, globalResInf2, 
+                                   globalKres1, globalKres2, globalKres3, idsSetPerUnit];
+            if (requiredParams.some(param => isNaN(param) || param <= 0)) {
+                alert('请输入合法的正数参数！');
+                return;
+            }
+            // 校验拐点顺序（必须递增）
+            if (globalResInf1 >= globalResInf2) {
+                alert('拐点值必须满足：第一拐点 < 第二拐点！');
+                return;
+            }
+            // 校验斜率（通常应该递增）
+            if (globalKres1 >= globalKres2 || globalKres2 >= globalKres3) {
+                if (!confirm('斜率设置可能不合理（通常应满足：K1 < K2 < K3），是否继续？')) {
+                    return;
+                }
+            }
+
+            // 1. 计算一次额定电流（三绕组）- 使用各侧容量分别计算
+            const i1n = sn1 / (Math.sqrt(3) * u1n); // 高压侧
+            const i2n = sn2 / (Math.sqrt(3) * u2n); // 中压侧
+            const i3n = sn3 / (Math.sqrt(3) * u3n); // 低压侧
+
+            // 2. 计算二次额定电流
+            globalI1n2 = i1n / nta1; // 高压侧
+            globalI2n2 = i2n / nta2; // 中压侧
+            globalI3n2 = i3n / nta3; // 低压侧
+
+            // 3. 计算平衡系数（以高压侧为基准）- 直接用二次电流比值计算
+            const kbal1 = 1.0; // 高压侧
+            // 平衡系数 = 高压侧二次额定电流 / 其他侧二次额定电流
+            globalKbal2 = globalI1n2 / globalI2n2; // 中压侧
+            globalKbal3 = globalI1n2 / globalI3n2; // 低压侧
+
+            // 4. 计算差动定值二次值（以高压侧二次额定电流为基准）
+            const idSet = globalIdSetPerUnit * globalI1n2; // 差动启动电流（二次值）
+            const idsSet = idsSetPerUnit * globalI1n2; // 差动速断定值（二次值）
+
+            // 更新结果展示（保留适当小数位）
+            document.getElementById('i1nResult').textContent = i1n.toFixed(3) + ' A';
+            document.getElementById('i2nResult').textContent = i2n.toFixed(3) + ' A';
+            document.getElementById('i3nResult').textContent = i3n.toFixed(3) + ' A';
+            document.getElementById('i1n2Result').textContent = globalI1n2.toFixed(3) + ' A';
+            document.getElementById('i2n2Result').textContent = globalI2n2.toFixed(3) + ' A';
+            document.getElementById('i3n2Result').textContent = globalI3n2.toFixed(3) + ' A';
+            document.getElementById('kbal1Result').textContent = kbal1.toFixed(4);
+            document.getElementById('kbal2Result').textContent = globalKbal2.toFixed(4);
+            document.getElementById('kbal3Result').textContent = globalKbal3.toFixed(4);
+            document.getElementById('idSetResult').textContent = idSet.toFixed(3) + ' A';
+            document.getElementById('idsSetResult').textContent = idsSet.toFixed(3) + ' A';
+
+            // 绘制三段式比率差动曲线
+            drawDiffCurve(globalI1n2, globalIdSetPerUnit, globalResInf1, globalResInf2, 
+                         globalKres1, globalKres2, globalKres3, idsSetPerUnit);
+            
+            // 自动计算测试点
+            document.getElementById('calcTestCurrentBtn').click();
+        });
+
+        /**
+         * 绘制三段式比率差动曲线（两个拐点，三段斜率）
+         */
+        function drawDiffCurve(i1n2, idSetPerUnit, resInf1, resInf2, kres1, kres2, kres3, idsSetPerUnit) {
+            const ctx = document.getElementById('diffCurveChart').getContext('2d');
+            
+            // 销毁原有图表（避免重复渲染）
+            if (diffChart) {
+                diffChart.destroy();
+            }
+
+            // 定义制动电流范围（标幺值）
+            const maxRes = Math.max(resInf2 * 1.2, idsSetPerUnit * 0.8, 8); // 最大制动电流
+            const step = 0.05; // 步长，越小曲线越平滑
+            
+            // 生成三段式动作边界数据点
+            const actionCurvePoints = [];
+            
+            // 第一段：0到第一拐点（resInf1），斜率为kres1
+            for (let res = 0; res <= resInf1; res += step) {
+                const id = idSetPerUnit + kres1 * res;
+                actionCurvePoints.push({ x: res, y: id });
+            }
+            
+            // 第二段：第一拐点（resInf1）到第二拐点（resInf2），斜率为kres2
+            const idAtResInf1 = idSetPerUnit + kres1 * resInf1; // 第一拐点处的差动电流
+            for (let res = resInf1; res <= resInf2; res += step) {
+                const id = idAtResInf1 + kres2 * (res - resInf1);
+                actionCurvePoints.push({ x: res, y: id });
+            }
+            
+            // 第三段：第二拐点（resInf2）之后，斜率为kres3
+            const idAtResInf2 = idAtResInf1 + kres2 * (resInf2 - resInf1); // 第二拐点处的差动电流
+            for (let res = resInf2; res <= maxRes; res += step) {
+                const id = idAtResInf2 + kres3 * (res - resInf2);
+                actionCurvePoints.push({ x: res, y: id });
+            }
+
+            // 生成动作区域填充数据（闭合多边形）- 修复填充问题
+            const actionAreaPoints = [];
+            // 从(0, idSetPerUnit)开始，沿着动作边界线
+            actionAreaPoints.push({ x: 0, y: idSetPerUnit });
+            actionAreaPoints.push(...actionCurvePoints);
+            // 补充到(maxRes, 最大纵坐标值)，然后回到(0, 最大纵坐标值)，最后回到起点
+            const maxY = Math.max(...actionCurvePoints.map(p => p.y), idsSetPerUnit) + 1;
+            actionAreaPoints.push({ x: maxRes, y: maxY });
+            actionAreaPoints.push({ x: 0, y: maxY });
+            actionAreaPoints.push({ x: 0, y: idSetPerUnit });
+
+            // 生成差动速断数据（水平线）
+            const speedBreakPoints = [];
+            for (let res = 0; res <= maxRes; res += step) {
+                speedBreakPoints.push({ x: res, y: idsSetPerUnit });
+            }
+
+            // 第一拐点标记数据
+            const firstInflectionPoint = [{ x: resInf1, y: idSetPerUnit + kres1 * resInf1 }];
+            
+            // 第二拐点标记数据
+            const secondInflectionPoint = [{ x: resInf2, y: idSetPerUnit + kres1 * resInf1 + kres2 * (resInf2 - resInf1) }];
+
+            // 配置图表 - 优化：只显示需要的图例
+            diffChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        // 1. 动作区域填充 - 放在最底层，不显示图例
+                        {
+                            label: '动作区域',
+                            data: actionAreaPoints,
+                            backgroundColor: 'rgba(231, 76, 60, 0.3)',
+                            borderColor: 'transparent',
+                            pointRadius: 0,
+                            fill: true,
+                            order: 4,
+                            tooltip: { enabled: false },
+                            showLine: false
+                        },
+                        // 2. 比率差动动作边界线
+                        {
+                            label: '比率差动动作边界',
+                            data: actionCurvePoints,
+                            borderColor: '#3498db',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            tension: 0,
+                            fill: false,
+                            cubicInterpolationMode: 'monotone',
+                            order: 3
+                        },
+                        // 3. 差动速断定值线
+                        {
+                            label: '差动速断定值',
+                            data: speedBreakPoints,
+                            borderColor: '#f39c12',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            tension: 0,
+                            fill: false,
+                            order: 2
+                        },
+                        // 4. 第一拐点标记
+                        {
+                            label: '第一拐点',
+                            data: firstInflectionPoint,
+                            backgroundColor: '#2ecc71',
+                            borderColor: '#2ecc71',
+                            pointRadius: 6,
+                            pointStyle: 'circle',
+                            showLine: false,
+                            order: 1
+                        },
+                        // 5. 第二拐点标记
+                        {
+                            label: '第二拐点',
+                            data: secondInflectionPoint,
+                            backgroundColor: '#9b59b6',
+                            borderColor: '#9b59b6',
+                            pointRadius: 6,
+                            pointStyle: 'circle',
+                            showLine: false,
+                            order: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: '制动电流 Ir (Ie)',
+                                font: { size: 14, weight: 'bold' },
+                                color: '#006f6b'
+                            },
+                            min: 0,
+                            max: maxRes,
+                            ticks: {
+                                stepSize: Math.max(1, Math.ceil(maxRes / 8)),
+                                precision: 1,
+                                color: '#006f6b'
+                            },
+                            grid: {
+                                color: 'rgba(0, 111, 107, 0.1)'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: '差动电流 Id (Ie)',
+                                font: { size: 14, weight: 'bold' },
+                                color: '#006f6b'
+                            },
+                            min: 0,
+                            max: maxY,
+                            ticks: {
+                                precision: 1,
+                                color: '#006f6b'
+                            },
+                            grid: {
+                                color: 'rgba(0, 111, 107, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { size: 12 },
+                                usePointStyle: true,
+                                padding: 20,
+                                filter: function(item, chart) {
+                                    // 只显示动作边界、速断定值、拐点的图例
+                                    return item.text === '比率差动动作边界' || 
+                                           item.text === '差动速断定值' ||
+                                           item.text === '第一拐点' ||
+                                           item.text === '第二拐点';
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            filter: function(tooltipItem) {
+                                // 只显示动作边界的提示
+                                return tooltipItem.datasetIndex === 1;
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+            
+            // 添加图表点击事件，获取点击位置的Ir和Id值
+            document.getElementById('diffCurveChart').onclick = function(evt) {
+                if (!diffChart) return;
+                
+                const points = diffChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points.length) {
+                    const firstPoint = points[0];
+                    const datasetIndex = firstPoint.datasetIndex;
+                    const index = firstPoint.index;
+                    
+                    // 获取点击点的Ir和Id值（标幺值）
+                    let irValue, idValue;
+                    
+                    if (datasetIndex === 1) { // 动作边界线
+                        const point = diffChart.data.datasets[datasetIndex].data[index];
+                        irValue = point.x;
+                        idValue = point.y;
+                    } else if (datasetIndex === 0) { // 动作区域
+                        // 对于动作区域，我们需要计算最近的动作边界点
+                        const clickX = diffChart.scales.x.getValueForPixel(evt.offsetX);
+                        const clickY = diffChart.scales.y.getValueForPixel(evt.offsetY);
+                        
+                        // 找到最近的动作边界点
+                        let minDist = Infinity;
+                        let nearestIr = 0;
+                        let nearestId = 0;
+                        
+                        for (const point of actionCurvePoints) {
+                            const dist = Math.sqrt(Math.pow(point.x - clickX, 2) + Math.pow(point.y - clickY, 2));
+                            if (dist < minDist) {
+                                minDist = dist;
+                                nearestIr = point.x;
+                                nearestId = point.y;
+                            }
+                        }
+                        
+                        irValue = nearestIr;
+                        idValue = nearestId;
+                    } else {
+                        return; // 点击的是其他元素，不处理
+                    }
+                    
+                    // 更新输入框
+                    document.getElementById('testIr').value = irValue.toFixed(2);
+                    document.getElementById('testId').value = idValue.toFixed(2);
+                    
+                    // 自动计算试验电流
+                    document.getElementById('calcTestCurrentBtn').click();
+                }
+            };
+        }
+        
+        // 试验电流计算按钮点击事件
+        document.getElementById('calcTestCurrentBtn').addEventListener('click', function() {
+            if (globalI1n2 === 0) {
+                alert('请先计算主变参数！');
+                return;
+            }
+            
+            // 获取测试点参数
+            const testIr = parseFloat(document.getElementById('testIr').value);
+            const testId = parseFloat(document.getElementById('testId').value);
+            const testSide = document.querySelector('input[name="testSide"]:checked').value;
+            const testType = document.querySelector('input[name="testType"]:checked').value;
+            const clockNumberMid = parseInt(document.getElementById('clockNumberMid').value);
+            const clockNumberLow = parseInt(document.getElementById('clockNumberLow').value);
+            
+            // 校验输入
+            if (isNaN(testIr) || isNaN(testId) || testIr < 0 || testId < 0) {
+                alert('请输入合法的Ir和Id值！');
+                return;
+            }
+            
+            // 获取平衡系数和钟点数
+            const kbal = testSide === 'mid' ? globalKbal2 : globalKbal3;
+            const clockNumber = testSide === 'mid' ? clockNumberMid : clockNumberLow;
+            const sideLabel = testSide === 'mid' ? '中压侧' : '低压侧';
+            
+            // 更新标签
+            document.getElementById('testSideLabel').textContent = `${sideLabel}：`;
+            document.getElementById('lowSideCurrentLabel').textContent = `${sideLabel}三相电流：`;
+            
+            // 检查点位置（动作区还是制动区）
+            const pointStatus = checkPointLocation(testIr, testId);
+            document.getElementById('testPointStatus').textContent = pointStatus;
+            
+            // 计算试验电流
+            calculateTestCurrents(testIr, testId, kbal, clockNumber, testType);
+            
+            // 显示结果区域
+            document.getElementById('testCurrentResults').style.display = 'block';
+        });
+        
+        /**
+         * 计算钟点数对应的相位差（考虑变压器接线组别）
+         */
+        function getClockPhaseShift(clockNumber) {
+            // 钟点数与角度对应关系
+            const clockToAngle = {
+                12: 0,     // 12点 = 0°
+                11: 30,    // 11点 = 30°
+                1: -30,    // 1点 = -30° (330°)
+            };
+            
+            return clockToAngle[clockNumber] || 0;
+        }
+        
+        /**
+         * 计算试验电流（考虑钟点数和试验类型）
+         */
+        function calculateTestCurrents(testIr, testId, kbal, clockNumber, testType) {
+            // 将标幺值转换为实际值
+            const Ir_actual = testIr * globalI1n2; // 实际制动电流(A)
+            const Id_actual = testId * globalI1n2; // 实际差动电流(A)
+            
+            // 计算单相电流幅值（假设A相）
+            // 对于反相情况（差动试验常用）
+            const I1_A = (2 * Ir_actual + Id_actual) / 2;
+            const I2_kbal_A = (2 * Ir_actual - Id_actual) / 2;
+            const I2_A = I2_kbal_A / kbal;
+            
+            let highSidePhases = [];
+            let lowSidePhases = [];
+            
+            if (testType === 'sixPhase') {
+                // 六相电流试验：三相都加电流
+                // 高压侧三相电流相位（Y接线）
+                highSidePhases = [
+                    { name: 'A', magnitude: I1_A, angle: 0 },
+                    { name: 'B', magnitude: I1_A, angle: -120 },
+                    { name: 'C', magnitude: I1_A, angle: 120 }
+                ];
+                
+                // 计算钟点数对应的相位差
+                const clockPhaseShift = getClockPhaseShift(clockNumber);
+                
+                // 中低压侧三相电流相位（根据钟点数，考虑CT极性反180°）
+                // 对于D接线变压器，电流相位需要根据钟点数调整
+                lowSidePhases = [
+                    { name: 'a', magnitude: I2_A, angle: (clockPhaseShift + 180) % 360 },
+                    { name: 'b', magnitude: I2_A, angle: (clockPhaseShift + 180 - 120) % 360 },
+                    { name: 'c', magnitude: I2_A, angle: (clockPhaseShift + 180 + 120) % 360 }
+                ];
+            } else {
+                // 三相电流试验：
+                // 高压侧：IA与IB幅值相等、角度相反，IC为0
+                highSidePhases = [
+                    { name: 'A', magnitude: I1_A, angle: 0 },
+                    { name: 'B', magnitude: I1_A, angle: 180 },
+                    { name: 'C', magnitude: 0, angle: 0 }
+                ];
+                
+                // 低压侧：Ia为√3倍电流，角度与高压侧IA相反（考虑CT极性反180°）
+                lowSidePhases = [
+                    { name: 'a', magnitude: I2_A * Math.sqrt(3), angle: 180 },
+                    { name: 'b', magnitude: 0, angle: 0 },
+                    { name: 'c', magnitude: 0, angle: 0 }
+                ];
+            }
+            
+            // 显示高压侧电流结果
+            let highSideTableHTML = '';
+            highSidePhases.forEach(phase => {
+                // 处理角度，使其在0-360度范围内
+                let angle = phase.angle;
+                if (angle < 0) angle += 360;
+                if (angle >= 360) angle -= 360;
+                
+                highSideTableHTML += `
+                    <tr>
+                        <td>${phase.name}相</td>
+                        <td>${phase.magnitude.toFixed(3)}</td>
+                        <td>${angle.toFixed(0)}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('highSideCurrentTable').innerHTML = highSideTableHTML;
+            
+            // 显示低压侧电流结果
+            let lowSideTableHTML = '';
+            lowSidePhases.forEach(phase => {
+                // 处理角度，使其在0-360度范围内
+                let angle = phase.angle;
+                if (angle < 0) angle += 360;
+                if (angle >= 360) angle -= 360;
+                
+                lowSideTableHTML += `
+                    <tr>
+                        <td>${phase.name}相</td>
+                        <td>${phase.magnitude.toFixed(3)}</td>
+                        <td>${angle.toFixed(0)}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('lowSideCurrentTable').innerHTML = lowSideTableHTML;
+            
+            // 验证计算 - 考虑电流折算到高压侧的钟点数变换
+            let verificationHTML = '';
+            
+            // 获取钟点数对应的相位差
+            const clockPhaseShift = getClockPhaseShift(clockNumber);
+            
+            // 计算各相差动电流和制动电流
+            for (let i = 0; i < 3; i++) {
+                const highPhase = highSidePhases[i];
+                const lowPhase = lowSidePhases[i];
+                
+                // 将高压侧电流转换为直角坐标
+                const highReal = highPhase.magnitude * Math.cos(highPhase.angle * Math.PI / 180);
+                const highImag = highPhase.magnitude * Math.sin(highPhase.angle * Math.PI / 180);
+                
+                // 对于中低压侧电流，需要先进行钟点数变换（折算到高压侧）
+                // 对于D接线变压器，电流相位需要根据钟点数调整
+                let lowAngle = lowPhase.angle;
+                if (testType === 'sixPhase') {
+                    // 对于六相试验，需要考虑钟点数变换
+                    // 低压侧电流需要折算到高压侧：减去钟点数对应的相位差
+                    lowAngle = (lowPhase.angle - clockPhaseShift + 360) % 360;
+                }
+                
+                // 低压侧电流需要考虑平衡系数
+                const lowReal = lowPhase.magnitude * Math.cos(lowAngle * Math.PI / 180) * kbal;
+                const lowImag = lowPhase.magnitude * Math.sin(lowAngle * Math.PI / 180) * kbal;
+                
+                // 计算差动电流（相量和）
+                const diffReal = highReal + lowReal;
+                const diffImag = highImag + lowImag;
+                const Id_calc = Math.sqrt(diffReal * diffReal + diffImag * diffImag);
+                
+                // 计算制动电流（标量和的一半）
+                const highMagnitude = highPhase.magnitude;
+                const lowMagnitude = lowPhase.magnitude * kbal;
+                const Ir_calc = (highMagnitude + lowMagnitude) / 2;
+                
+                // 计算误差
+                const Id_error = Math.abs((Id_calc / globalI1n2) - testId) / testId * 100;
+                const Ir_error = Math.abs((Ir_calc / globalI1n2) - testIr) / testIr * 100;
+                
+                let status = '✅';
+                if (Id_error > 1 || Ir_error > 1) {
+                    status = '⚠️';
+                }
+                if (Id_error > 5 || Ir_error > 5) {
+                    status = '❌';
+                }
+                
+                verificationHTML += `
+                    <tr>
+                        <td>${highPhase.name}相</td>
+                        <td>${(Id_calc / globalI1n2).toFixed(3)}</td>
+                        <td>${(Ir_calc / globalI1n2).toFixed(3)}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('verificationTable').innerHTML = verificationHTML;
+        }
+        
+        /**
+         * 检查测试点位置（动作区还是制动区）
+         */
+        function checkPointLocation(Ir, Id) {
+            // 计算动作边界上的Id值
+            let idBoundary;
+            
+            if (Ir <= globalResInf1) {
+                // 第一段：拐点1前，斜率为kres1
+                idBoundary = globalIdSetPerUnit + globalKres1 * Ir;
+            } else if (Ir > globalResInf1 && Ir <= globalResInf2) {
+                // 第二段：拐点1-拐点2，斜率为kres2
+                const idAtResInf1 = globalIdSetPerUnit + globalKres1 * globalResInf1;
+                idBoundary = idAtResInf1 + globalKres2 * (Ir - globalResInf1);
+            } else {
+                // 第三段：拐点2之后，斜率为kres3
+                const idAtResInf1 = globalIdSetPerUnit + globalKres1 * globalResInf1;
+                const idAtResInf2 = idAtResInf1 + globalKres2 * (globalResInf2 - globalResInf1);
+                idBoundary = idAtResInf2 + globalKres3 * (Ir - globalResInf2);
+            }
+            
+            // 检查点位置
+            if (Id >= idBoundary) {
+                return '✅ 点在动作区内（保护应动作）';
+            } else {
+                return '❌ 点在制动区内（保护应不动作）';
+            }
+        }
+        
+        // 页面加载时自动计算并绘制（使用默认值）
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('calcBtn').click();
+        });
+    </script>
+
+    <!-- 引入Bootstrap脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
