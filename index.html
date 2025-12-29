@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 40px auto 20px;
             padding: 25px;
             background-color: var(--card-bg);
@@ -68,9 +68,8 @@
         }
 
         .tools-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -84,8 +83,7 @@
             text-align: left;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            max-width: 280px;
+            height: 100%;
             min-height: 350px;
         }
 
@@ -157,20 +155,36 @@
             text-align: center;
         }
 
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 900px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                max-width: 95%;
+                padding: 20px;
+            }
+            
+            .tools-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
                 margin-top: 20px;
                 margin-bottom: 20px;
             }
             
             .tools-container {
+                grid-template-columns: 1fr;
                 gap: 15px;
             }
             
             .tool-card {
-                max-width: 100%;
-                min-height: 300px;
+                min-height: 320px;
             }
             
             .tool-title {
@@ -249,6 +263,16 @@
                 </p>
                 <a href="./3U3I/hc.html" class="nav-button">进入工具</a>
             </div>
+            
+            <!-- 工具4：主变差动保护计算器 -->
+            <div class="tool-card">
+                <div class="tool-icon">📝</div>
+                <h3 class="tool-title">主变差动保护计算器</h3>
+                <p class="tool-description">
+                    主变差动保护定值计算工具，支持平衡系数计算、差动电流与制动电流计算、比率制动特性分析，辅助变压器差动保护调试与整定。
+                </p>
+                <a href="./transformer/index.html" class="nav-button">进入工具</a>
+            </div>
         </div>
         
         <div class="footer-note">
@@ -280,8 +304,8 @@
             
             // 添加键盘快捷键支持
             document.addEventListener('keydown', function(e) {
-                // 数字键1-3快速导航
-                if (e.key >= '1' && e.key <= '3' && !e.ctrlKey && !e.altKey) {
+                // 数字键1-4快速导航
+                if (e.key >= '1' && e.key <= '4' && !e.ctrlKey && !e.altKey) {
                     const index = parseInt(e.key) - 1;
                     const links = document.querySelectorAll('.nav-button');
                     
